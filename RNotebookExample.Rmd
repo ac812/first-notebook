@@ -1,0 +1,91 @@
+---
+output_dir: "."
+title: "RNotebookExample"
+output: html_document
+---
+
+# This is a heading not a comment
+
+```{r load-data, message=FALSE}
+# load tidyverse library
+library(tidyverse)
+library(kableExtra) # used for kbl() 
+library(rmarkdown) # used for paged_table()
+library(ggpubr) # used for ggarrange()
+
+# read file into R
+pop_data <- read_csv("data/gapminder_data.csv")
+
+# create a table with data from European countries in 2007 - orderd by life expectancy
+euro_data_tbl <- pop_data %>%
+                    filter(continent == "Europe" & year == 2007) %>%
+                    select(-continent, -year) %>%
+                    arrange(desc(lifeExp)) %>%
+                    rename(Country = country, "Population Size" = pop, "Life Expectancy" = lifeExp, "GDP" = gdpPercap)
+
+```
+
+The results in euro_data_tbl are displayed in the Table below:
+
+```{r kbl-table}
+euro_data_tbl %>%
+  kbl() %>%
+  kable_styling(bootstrap_options = "striped", full_width = F) %>% 
+          scroll_box(width = "100%", height = "200px")
+```
+
+This is a better way to display long tables:
+
+```{r paged-table}
+paged_table(euro_data_tbl)
+```
+
+# Adding Images
+
+Next, the life expectancy in Europe is observed across different years.  The aim of this is to check if there was a change in life expectancy over the years.  The data used for the life expectancy over the years analysis is the gapminder data and the following data manipulation was performed:
+
+```{r fig-data}
+#keep on European data and change year to factor
+euro_data_fig <- pop_data %>% 
+                    filter(continent == "Europe")  %>% 
+                    mutate(year=as_factor(year))
+
+# keep only UK data
+uk_data_fig <- pop_data %>%
+                  filter(country == "United Kingdom") %>% 
+                  mutate(year=as_factor(year))
+```
+
+
+The life expectancy for Europe over the years is plotted as following:
+
+```{r fig, warning=FALSE, fig.cap="Life Expectancy in Europe over the years"}
+#Euro plot
+euro_plot <- euro_data_fig %>%
+                ggplot(mapping=aes(x=year, y=lifeExp)) +
+                geom_violin() +
+                stat_summary(fun.y = median, geom = "point")
+
+#draw euro plot
+euro_plot
+
+```
+
+Now we will display more than one image together:
+
+```{r fig-comp}
+
+#UK plot
+uk_plot <- uk_data_fig %>% 
+              ggplot(mapping=aes(x=year, y=lifeExp)) +
+              geom_point()
+
+#plot EU and UK plots together
+ggarrange(euro_plot, uk_plot, ncol = 2, nrow = 1, labels = "AUTO")
+
+```
+
+
+
+
+
